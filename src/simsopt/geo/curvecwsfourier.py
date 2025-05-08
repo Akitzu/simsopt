@@ -17,7 +17,7 @@ from .jit import jit
 from .._core.derivative import derivative_dec
 from .plotting import fix_matplotlib_3d
 
-__all__ = ['CurveCWSFourierCPP']
+__all__ = ['CurveCWSFourier']
 
 def gamma_2d(cdofs, qpts, order, G:int=0, H:int=0):
     """Given some dofs, return curve position in 2D cartesian coordinate
@@ -69,8 +69,7 @@ def vjp_contraction_2d(mat, v):
     # contract matrix of size ijk times vector of size jk into array of size i
     return np.einsum('ijk,ij->k',mat,v)
 
-
-class CurveCWSFourierCPP( Curve, sopp.Curve ):
+class CurveCWSFourier( Curve, sopp.Curve ):
     def __init__(self, quadpoints, order, surf, G=0, H=0, **kwargs):
         # Curve order. Number of Fourier harmonics for phi and theta
         self.order = order

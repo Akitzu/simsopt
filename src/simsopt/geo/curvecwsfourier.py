@@ -84,7 +84,7 @@ class CurveCWSFourier( Curve, sopp.Curve ):
 
         # Initialize C++ class and Curve class   
         sopp.Curve.__init__(self, quadpoints)
-        Curve.__init__(self, x0=self.get_dofs(), depends_on=[], names=self._make_names(), external_dof_setter=CurveCWSFourierCPP.set_dofs_impl, **kwargs)      
+        Curve.__init__(self, x0=self.get_dofs(), depends_on=[], names=self._make_names(), external_dof_setter=CurveCWSFourier.set_dofs_impl, **kwargs)      
 
         self.numquadpoints = self.quadpoints.size
 

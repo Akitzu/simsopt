@@ -39,7 +39,7 @@ else:
     vmec_input_filename = os.path.join(parent_path, 'inputs', f'input.nfp{nfp}_QA')
 if nfp == 2:
     ncoils = 3
-    nmodes_coils = 16
+    nmodes_coils = 4
     minor_radius_cws = 0.55
     nphi_VMEC = 55
     quadpoints = 260
@@ -49,7 +49,7 @@ if nfp == 2:
     ARCLENGTH_WEIGHT = 5e-8
 else:
     ncoils = 4
-    nmodes_coils = 14
+    nmodes_coils = 4
     minor_radius_cws = 0.45
     nphi_VMEC = 42
     quadpoints = 240
@@ -123,22 +123,14 @@ else:
     base_curves = []
     for i in range(ncoils):
         curve_cws = CurveCWSFourier(
-            mpol=cws.mpol,
-            ntor=cws.ntor,
-            idofs=cws.x,
             quadpoints=quadpoints,
             order=nmodes_coils,
-            nfp=cws.nfp,
-            stellsym=cws.stellsym,
+            surf=cws,
+            G=1,
         )
+        # Set initial toroidal location of coils
         angle = (i+0.5)*(2*np.pi)/((2)*cws.nfp*ncoils)
-        curve_dofs = np.zeros(len(curve_cws.get_dofs()),)
-        curve_dofs[0] = 1
-        curve_dofs[2*nmodes_coils+2] = 0
-        curve_dofs[2*nmodes_coils+3] = angle
-        curve_cws.set_dofs(curve_dofs)
-        curve_cws.fix(0)
-        curve_cws.fix(2*nmodes_coils+2)
+        curve_cws.set('phic(0)', angle)
         base_curves.append(curve_cws)
     base_currents = [Current(1)*1e5 for i in range(ncoils)]
     # base_currents[0].fix_all() ## Uncomment this if current goes to zero

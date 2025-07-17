@@ -104,14 +104,15 @@ def get_curve(curvetype, rotated, x=np.asarray([0.5])):
             quadpoints_phi=np.arange(50)/50, 
             quadpoints_theta=np.arange(50)/50, 
         )
+        quadpoints = np.linspace(0, 1, 128, endpoint=False)
         if curvetype == "CurveCWSFourier_windowpane":
-            curve = CurveCWSFourier(128, order, surf_test, G=0, H=0)
+            curve = CurveCWSFourier(quadpoints, order, surf_test, G=0, H=0)
         elif curvetype == "CurveCWSFourier_helical":
-            curve = CurveCWSFourier(128, order, surf_test, G=10, H=1)
+            curve = CurveCWSFourier(quadpoints, order, surf_test, G=10, H=1)
         elif curvetype == "CurveCWSFourier_pol":
-            curve = CurveCWSFourier(128, order, surf_test, G=1, H=0)
+            curve = CurveCWSFourier(quadpoints, order, surf_test, G=1, H=0)
         elif curvetype == "CurveCWSFourier_tor":
-            curve = CurveCWSFourier(128, order, surf_test, G=0, H=1)
+            curve = CurveCWSFourier(quadpoints, order, surf_test, G=0, H=1)
         else:
             assert False
     else:
@@ -176,11 +177,11 @@ def get_curve(curvetype, rotated, x=np.asarray([0.5])):
 
 
 class Testing(unittest.TestCase):
-<<<<<<< HEAD
     curvetypes = [
         "CurveXYZFourier", 
         "JaxCurveXYZFourier", 
         "CurveRZFourier", 
+        "JaxCurvePlanarFourier",
         "CurvePlanarFourier", 
         "CurveHelical", 
         "CurveXYZFourierSymmetries1",
@@ -193,11 +194,6 @@ class Testing(unittest.TestCase):
         "CurveCWSFourier_tor"
     ]
     
-=======
-
-    curvetypes = ["CurveXYZFourier", "JaxCurveXYZFourier", "CurveRZFourier", "JaxCurvePlanarFourier", "CurvePlanarFourier", "CurveHelical", "CurveXYZFourierSymmetries1", "CurveXYZFourierSymmetries2", "CurveXYZFourierSymmetries3", "CurveHelicalInitx0"]
-
->>>>>>> master
     def get_curvexyzfouriersymmetries(self, stellsym=True, x=None, nfp=None, ntor=1):
         # returns a CurveXYZFourierSymmetries that is randomly perturbed
 

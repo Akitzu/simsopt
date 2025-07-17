@@ -408,8 +408,6 @@ class FramedCurveCentroid(FramedCurve):
         alphadash = self.rotation.alphadash(self.curve.quadpoints)
         return self.torsion(gamma, d1gamma, d2gamma, alpha, alphadash)
 
-<<<<<<< HEAD
-=======
     def frame_binormal_curvature(self):
         gamma = self.curve.gamma()
         d1gamma = self.curve.gammadash()
@@ -891,7 +889,6 @@ def binormal_curvature_pure_centroid(gamma, gammadash, gammadashdash,
 
     tdash *= 1/jnp.linalg.norm(gammadash, axis=1)[:, None]
     return inner(tdash, b)
-<<<<<<< HEAD
 
 # def twist_pure_frenet(gamma, gammadash, gammadashdash, gammadashdashdash,
 #                           alpha, alphadash):

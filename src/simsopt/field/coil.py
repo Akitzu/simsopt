@@ -223,7 +223,7 @@ def load_coils_from_makegrid_file(filename, order, ppp=20, group_names=None):
             if group_names is None:
                 currents.append(curr)
             else:
-                this_group_name = vals[5]
+                this_group_name = vals[4]
                 if this_group_name in group_names:
                     currents.append(curr)
 

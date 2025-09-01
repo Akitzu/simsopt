@@ -144,7 +144,7 @@ class CurveXYZFourier(sopp.CurveXYZFourier, Curve):
                 if group_names is None:
                     curve_data.append(single_curve_data)
                 else:
-                    this_group_name = vals[5]
+                    this_group_name = vals[4]
                     if this_group_name in group_names:
                         curve_data.append(single_curve_data)
                 single_curve_data = []

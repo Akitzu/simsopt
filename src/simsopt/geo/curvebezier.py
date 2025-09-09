@@ -9,5 +9,6 @@ class CurveBezier(JaxCurve):
     A class that implements a Piecewise Cubic Bezier curve.
     """
 
-    def __init__(self, points : ArrayLike, order = 1, weights = None):
+    def __init__(self, points : ArrayLike):
+
         pass

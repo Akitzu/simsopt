@@ -75,7 +75,6 @@ class SurfaceXYZ(sopp.Surface, Surface):
         self.x_func = x_func
         self.y_func = y_func
         self.z_func = z_func
-        self.nfp = 1
         
         # Set up dof names
         if dof_names is None:

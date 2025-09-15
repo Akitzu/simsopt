@@ -23,6 +23,7 @@ from .surfacehenneberg import *
 from .surfaceobjectives import *
 from .surfacerzfourier import *
 from .surfacexyz import *
+from .surfacecyl import *
 from .surfacexyzfourier import *
 from .surfacexyztensorfourier import *
 from .strain_optimization import *
@@ -42,7 +43,7 @@ __all__ = (curve.__all__ + curvehelical.__all__ +
            boozersurface.__all__ + qfmsurface.__all__ +
            surface.__all__ +
            surfacegarabedian.__all__ + surfacehenneberg.__all__ +
-           surfacerzfourier.__all__ + surfacexyz.__all__ + surfacexyzfourier.__all__ +
+           surfacerzfourier.__all__ + surfacexyz.__all__ + surfacecyl.__all__ + surfacexyzfourier.__all__ +
            surfacexyztensorfourier.__all__ + surfaceobjectives.__all__ +
            permanent_magnet_grid.__all__ + orientedcurve.__all__ +
            strain_optimization.__all__ + framedcurve.__all__ + 

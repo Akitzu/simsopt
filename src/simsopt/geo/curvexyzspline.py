@@ -2,9 +2,16 @@ from .._core.descriptor import PositiveInteger
 from numpy.typing import ArrayLike
 from typing import Union
 
+from .._core.optimizable import DOFs
 from .curve import JaxCurve
 import jax.numpy as jnp
 import numpy as np
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
+    Warning("Matplotlib not found. The plot method will not work.")
 
 try:
     from interpax import interp1d
@@ -17,10 +24,15 @@ except ImportError:
 
 __all__ = ['CurveXYZSpline']
 
+import logging
+logger = logging.getLogger(__name__)
   
 
 class CurveXYZSpline(JaxCurve):
-    
+    """
+    Class representing a 3D curve defined by a set of knots and interpolated using various spline methods.
+    """
+
     INTERPAX_METHODS_1D = (
     "cubic",
     "cubic2",
@@ -32,73 +44,74 @@ class CurveXYZSpline(JaxCurve):
     "nearest", 
     "linear")
 
-    def __init__(self, quadpoints : Union[ArrayLike,int] = None, dofs : ArrayLike = None):
-        """
-        coords are xyz
-        knots are in [0,1)
-        method is one of the possible provided by interpax
+    def __init__(self, quadpoints : Union[ArrayLike,int] = None, dofs : DOFs = None, **kwargs):
         """
 
-        # default example with 3 knots
-        self._knots = np.array([[0.0, 0.0, 0.0],
-                                [1.0, 0.0, 0.0],
-                                [1.0, 1.0, 0.0]])
-        self._arclengths = np.linspace(0, 1, len(self._knots), endpoint=False)
-        self._method = "cubic2"
-        self._n = len(self._knots)
+        """
 
+        # default example with a triangle
+        knots = np.array([[0.0, 0.0, 0.0],
+                          [1.0, 0.0, 0.0],
+                          [1.0, 1.0, 0.0]])
+        arclengths = np.linspace(0, 1, len(knots), endpoint=False)
+        x0_example = np.hstack((arclengths, np.array(knots).flatten()))
+        
+        # initialize the method and use cubic2 as default
+        self.method = kwargs.pop("method", "cubic2")
+
+        # sets up the quadpoints 
         if quadpoints is None:
             quadpoints = np.linspace(0, 1, 100, endpoint=False)
         elif isinstance(quadpoints, int):
             quadpoints = np.linspace(0, 1, quadpoints, endpoint=False)
-    
+
+        # call to parent constructor
         if dofs is None:
-            JaxCurve.__init__(self, quadpoints, self.jaxcurve_pure, external_dof_setter=CurveXYZSpline.set_dofs_impl,
-                           names=self._make_names(self.get_dofs()),
-                           x0=self.get_dofs())
+            if "x0" not in kwargs:
+                x0 = x0_example
+                self._knots_size = len(knots)
+            else:
+                x0 = kwargs.pop("x0")
+                if len(x0) % 4 != 0:
+                    raise ValueError("Length of x0 must be a multiple of 4")
+                self._knots_size = len(x0) // 4
+
+            JaxCurve.__init__(self, quadpoints, self.jaxcurve_pure, 
+                              names=self._make_names(self._knots_size), 
+                              x0=x0, **kwargs)
         else:
-            JaxCurve.__init__(self, quadpoints, self.jaxcurve_pure, external_dof_setter=CurveXYZSpline.set_dofs_impl,
-                           dofs=dofs,
-                           names=self._make_names(dofs))
+            JaxCurve.__init__(self, quadpoints, self.jaxcurve_pure,
+                              dofs=dofs, **kwargs)
 
     def jaxcurve_pure(self, dofs, quadpoints):
         n = dofs.shape[0] // 4
-        knots = dofs[:n]
-        coords = dofs[n:].reshape((n, 3))
-        return interp1d(quadpoints, knots, coords, method=self._method, extrap=False, period=1)
-
-    def _make_names(self, dofs):
-        n = dofs.shape[0] // 4
-        phi_names = [f'arclength({i})' for i in range(n)]
-        x_names = [f'x({i})' for i in range(n)]
-        y_names = [f'y({i})' for i in range(n)]
-        z_names = [f'z({i})' for i in range(n)]
-        return phi_names + x_names + y_names + z_names
+        arclengths = dofs[:n]
+        knots = dofs[n:].reshape((n, 3))
+        return interp1d(quadpoints, arclengths, knots, method=self._method, extrap=False, period=1)
 
     def num_dofs(self):
         """
         This function returns the number of dofs associated to this object.
         """
-        return 4 * self._n
+        return 4 * self._knots_size
 
     def get_dofs(self):
         """
         This function returns the dofs associated to this object.
         """
-        return jnp.array(np.hstack((self._arclengths, self._knots.flatten())))
+        return self.local_full_x
 
-    def set_dofs_impl(self, dofs):
+    def set_dofs_impl(self, x : ArrayLike):
         """
         This function sets the dofs associated to this object.
         """
-        n = dofs.shape[0] // 4
-        self._n = n
-        self._arclengths = np.array(dofs[:n])
-        self._knots = np.array(dofs[n:]).reshape((n, 3))
-
+        pass
+        # n = len(x) // 4
+        # self._knots_size = n
+        # self._arclengths = np.array(x[:n])
+        # self._knots = np.array(x[n:]).reshape((n, 3))
+        
     def plot_knots(self, **kwargs):
-        import matplotlib.pyplot as plt
-
         if 'ax' in kwargs:
             ax = kwargs.pop('ax')
             fig = ax.get_figure()
@@ -114,43 +127,43 @@ class CurveXYZSpline(JaxCurve):
         ax.set_title('Knots in 3D')
         ax.grid()
 
-        if 'show' in kwargs and kwargs.pop('show'):
+        if 'show' not in kwargs or kwargs.pop('show'):
             plt.show()
-        return fig, ax
+        return ax
 
     # arclengths property : arclengths on the curve at the knots
     @property
     def arclengths(self):
-        return self._arclengths
-    @arclengths.setter
-    def arclengths(self, arclengths : ArrayLike):
-        if arclengths is None:
-            raise ValueError("arclengths cannot be None")
-        elif len(arclengths) != len(self._arclengths):
-            raise ValueError("Length of arclengths must match length of coords")
-        elif not all(isinstance(a, float) or isinstance(a, np.floating) for a in arclengths):
-            raise ValueError("All elements of arclengths must be floats")
-        elif jnp.any(jnp.diff(arclengths) <= 0):
-            raise ValueError("Arclengths must be in strictly increasing order")
-        elif arclengths[0] < 0 or arclengths[-1] >= 1:
-            raise ValueError("Arclengths must be in the interval [0, 1)")
-        self._arclengths = arclengths
-        self.dof_list[:self._n] = arclengths
+        return self.local_full_x[:self._knots_size]
+    # @arclengths.setter
+    # def arclengths(self, arclengths : ArrayLike):
+    #     if len(arclengths) != self._knots_size:
+    #         raise ValueError("Length of arclengths must match the number of knots")
+    #     elif not all(isinstance(a, float) or isinstance(a, np.floating) for a in arclengths):
+    #         raise ValueError("All elements of arclengths must be floats")
+    #     elif np.any(np.diff(arclengths) <= 0):
+    #         raise ValueError("Arclengths must be in strictly increasing order")
+    #     elif arclengths[0] < 0 or arclengths[-1] >= 1:
+    #         raise ValueError("Arclengths must be in the interval [0, 1)")
+    #     elif self.local_full_dof_size != self.local_dof_size:
+    #         raise ValueError("Cannot set arclengths when  of DOFs has changed. Create a new CurveXYZSpline instance instead.")
+
+    #     # update the DOFS object
+    #     self. = np.hstack((arclengths, self.x[self._knots_size:]))
 
     # knots property : provided points where the curve values are specified 
     @property
     def knots(self):
-        return self._knots
-    @knots.setter
-    def knots(self, knots : ArrayLike):
-        if knots is None:
-            raise ValueError("knots cannot be None")
-        elif len(knots) != len(self._knots):
-            raise ValueError("Length of knots must match length of coords")
-        elif not all(isinstance(k, (list, np.ndarray)) and len(k) == 3 for k in knots):
-            raise ValueError("All elements of knots must be array-like of length 3")
-        self._knots = np.array(knots)
-        self.dof_list[self._n:] = self._knots.flatten()
+        return self.local_full_x[self._knots_size:].reshape((self._knots_size, 3))
+    # @knots.setter
+    # def knots(self, knots : ArrayLike):
+    #     if len(knots) != self._knots_size:
+    #         raise ValueError("Length of new knots must match length of old knots")
+    #     elif not all(isinstance(k, (list, np.ndarray)) and len(k) == 3 for k in knots):
+    #         raise ValueError("All elements of knots must be array-like of length 3")
+
+    #     # update the DOFS object
+    #     self.x = np.hstack((self.x[:self._knots_size], np.array(knots).flatten()))
     
     # method of interpolation
     @property
@@ -161,14 +174,22 @@ class CurveXYZSpline(JaxCurve):
         if method not in self.INTERPAX_METHODS_1D:
             raise ValueError(f"Method must be one of {self.INTERPAX_METHODS_1D}")
         self._method = method
+    
+    @staticmethod
+    def _make_names(nknots : PositiveInteger):
+        phi_names = [f'arclength({i})' for i in range(nknots)]
+        x_names = [f'x({i})' for i in range(nknots)]
+        y_names = [f'y({i})' for i in range(nknots)]
+        z_names = [f'z({i})' for i in range(nknots)]
+        return phi_names + x_names + y_names + z_names
 
     @classmethod
     def from_knots(cls, knots : ArrayLike, method : str = "cubic2", arclenghts : ArrayLike = None, quadpoints : Union[ArrayLike,int] = None):
+        """
         
+        """
+
         if arclenghts is None:
             arclenghts = np.linspace(0, 1, len(knots), endpoint=False)
- 
-        dofs = np.hstack((arclenghts, np.array(knots).flatten()))
-        instance = cls(quadpoints=quadpoints, dofs=dofs)
-        instance.method = method
-        return instance
+
+        return cls(quadpoints=quadpoints, x0=np.hstack((arclenghts, np.array(knots).flatten())), method=method)

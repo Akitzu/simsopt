@@ -8,6 +8,7 @@ from simsopt.geo.curve import RotatedCurve, create_equally_spaced_curves, create
 from simsopt.geo.curvexyzfourier import CurveXYZFourier, JaxCurveXYZFourier
 from simsopt.geo.curveplanarfourier import CurvePlanarFourier, JaxCurvePlanarFourier
 from simsopt.geo.curvehelical import CurveHelical
+from simsopt.geo.curvexyzspline import CurveXYZSpline
 from simsopt.geo.curverzfourier import CurveRZFourier
 from simsopt.geo.curveobjectives import CurveLength, LpCurveCurvature, \
     LpCurveTorsion, CurveCurveDistance, ArclengthVariation, \
@@ -23,7 +24,7 @@ parameters['jit'] = False
 
 class Testing(unittest.TestCase):
 
-    curvetypes = ["CurveXYZFourier", "JaxCurveXYZFourier", "CurveRZFourier", "CurvePlanarFourier", "JaxCurvePlanarFourier", "CurveHelical"]
+    curvetypes = ["CurveXYZFourier", "JaxCurveXYZFourier", "CurveRZFourier", "CurvePlanarFourier", "JaxCurvePlanarFourier", "CurveHelical", "CurveXYZSpline"]
 
     def create_curve(self, curvetype, rotated):
         np.random.seed(1)
@@ -43,6 +44,11 @@ class Testing(unittest.TestCase):
             coil = JaxCurvePlanarFourier(nquadpoints, order)
         elif curvetype == "CurveHelical":
             coil = CurveHelical(nquadpoints, order, 5, 1, 1.0, 0.3)
+        elif curvetype == "CurveXYZSpline":
+            # order is used as the number of knots
+            points = np.random.rand(order, 3)
+            coil = CurveXYZSpline.from_knots(points, quadpoints=nquadpoints)
+            coil.fix_arclengths()
         else:
             # print('Could not find' + curvetype)
             assert False
@@ -64,6 +70,8 @@ class Testing(unittest.TestCase):
             dofs[2*order + 4] = 0.
         elif curvetype in ["CurveHelical"]:
             dofs[0] = np.pi/2
+        elif curvetype in ["CurveXYZSpline"]:
+            dofs = coil.x.copy()
         else:
             assert False
 

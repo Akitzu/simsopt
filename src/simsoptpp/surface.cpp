@@ -778,6 +778,10 @@ void Surface<Array>::d2volume_by_dcoeffdcoeff_impl(Array& data) {
 
 #else
 
+#include "xsimd/xsimd.hpp"
+#include "simdhelpers.h"
+#include "vec3dsimd.h"
+
 template<class Array>
 void Surface<Array>::d2volume_by_dcoeffdcoeff_impl(Array& data) {
     data *= 0.;

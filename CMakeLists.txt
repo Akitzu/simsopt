@@ -91,7 +91,7 @@ else()
         ${boost_target}
         PREFIX ${boost_DIR}
         GIT_REPOSITORY https://github.com/boostorg/boost.git
-        GIT_TAG boost-1.82.0
+        GIT_TAG boost-1.86.0
         GIT_SHALLOW TRUE
         GIT_PROGRESS TRUE
         GIT_SUBMODULES tools/build tools/boost_install libs/config libs/numeric
@@ -127,10 +127,10 @@ pybind11_add_module(${PROJECT_NAME}
     src/simsoptpp/surface.cpp src/simsoptpp/surfacerzfourier.cpp src/simsoptpp/surfacexyzfourier.cpp
     src/simsoptpp/integral_BdotN.cpp
     src/simsoptpp/dipole_field.cpp src/simsoptpp/permanent_magnet_optimization.cpp
-    src/simsoptpp/dommaschk.cpp src/simsoptpp/reiman.cpp src/simsoptpp/tracing.cpp 
-    src/simsoptpp/magneticfield_biotsavart.cpp src/simsoptpp/python_boozermagneticfield.cpp 
+    src/simsoptpp/dommaschk.cpp src/simsoptpp/reiman.cpp src/simsoptpp/tracing.cpp
+    src/simsoptpp/magneticfield_biotsavart.cpp src/simsoptpp/python_boozermagneticfield.cpp
+    src/simsoptpp/boozerradialinterpolant.cpp src/simsoptpp/curveplanarfourier.cpp
     src/simsoptpp/magneticfield_wireframe.cpp
-    src/simsoptpp/boozerradialinterpolant.cpp
     src/simsoptpp/wireframe_optimization.cpp
     )
 

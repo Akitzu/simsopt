@@ -62,8 +62,8 @@ class CurveFilament(FramedCurve):
             out += self.curve.dgammadashdash_by_dcoeff_vjp(vgdd)
         return out
 
-    def dgammadash_by_dcoeff_vjp(self, v):
 
+    def dgammadash_by_dcoeff_vjp(self, v):
         vg = self.framedcurve.rotated_frame_dash_dcoeff_vjp(v, self.dn, self.db, 0)
         vgd = self.framedcurve.rotated_frame_dash_dcoeff_vjp(v, self.dn, self.db, 1)
         vgdd = self.framedcurve.rotated_frame_dash_dcoeff_vjp(v, self.dn, self.db, 2)

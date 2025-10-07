@@ -1,14 +1,17 @@
 from math import sin, cos
 
 import numpy as np
-from jax import vjp, jacfwd, jvp
+from jax import vjp, jacfwd, jvp, hessian, grad
 import jax.numpy as jnp
 
 import simsoptpp as sopp
 from .._core.optimizable import Optimizable
 from .._core.derivative import Derivative
+from .surfacerzfourier import SurfaceRZFourier
+from .surfacexyztensorfourier import SurfaceXYZTensorFourier
 
 from .jit import jit
+from .._core.derivative import derivative_dec
 from .plotting import fix_matplotlib_3d
 
 __all__ = ['Curve', 'JaxCurve', 'RotatedCurve', 'curves_to_vtk', 'create_equally_spaced_curves',
@@ -218,6 +221,7 @@ class Curve(Optimizable):
             raise ValueError("Invalid engine option! Please use one of {matplotlib, mayavi, plotly}.")
         return ax
 
+    
     def dgamma_by_dcoeff_vjp(self, v):
         return Derivative({self: self.dgamma_by_dcoeff_vjp_impl(v)})
 
@@ -705,6 +709,12 @@ class RotatedCurve(sopp.Curve, Curve):
                  [0, -1, 0],
                  [0, 0, -1]])
         self.rotmatT = self.rotmat.T.copy()
+
+    def change_curve(self, new_curve):
+        if isinstance(self.curve, RotatedCurve):
+            self.curve.change_curve(new_curve)
+        else:
+            self.curve = new_curve
 
     def get_dofs(self):
         """
@@ -1220,6 +1230,27 @@ def create_equally_spaced_curves(ncurves, nfp, stellsym, R0=1.0, R1=0.5, order=6
         curves.append(curve)
     return curves
 
+def create_equally_spaced_oriented_curves( ncurves, nfp, R0, R1, Z0, order, numquadpoints=None ):
+    if numquadpoints is None:
+        numquadpoints = 15 * order
+
+    curves = []
+    from .orientedcurve import OrientedCurveXYZFourier
+
+    phi = np.linspace(0,np.pi/nfp,ncurves,endpoint=False)
+    dphi = np.pi/nfp * 1/ncurves
+    phi = phi + dphi/2
+    for ii in range(ncurves):
+        c = OrientedCurveXYZFourier( numquadpoints, order )
+        c.set('xc(1)',R1)
+        c.set('zs(1)',R1)
+        c.set('x0', R0*np.cos(phi[ii]) )
+        c.set('y0', R0*np.sin(phi[ii]) )
+        c.set('z0', Z0)
+        c.set('yaw', np.pi/2 - phi[ii])
+        curves.append( c )
+
+    return curves
 
 def create_equally_spaced_planar_curves(
         ncurves, nfp, stellsym, R0=1.0, R1=0.5, 
@@ -1288,3 +1319,4 @@ def create_equally_spaced_planar_curves(
         curve.set_dofs(dofs)
         curves.append(curve)
     return curves
+

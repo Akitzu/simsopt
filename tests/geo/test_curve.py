@@ -21,7 +21,7 @@ from simsopt.field import BiotSavart, Current, coils_via_symmetries, Coil
 from simsopt.field.coil import coils_to_makegrid
 from simsopt.geo import CurveLength, CurveCurveDistance
 from math import gcd
-from simsopt.geo import SurfaceRZFourier
+from simsopt.geo import SurfaceRZFourier, CurveCWSFourier
 from pathlib import Path
 from monty.tempfile import ScratchDir
 
@@ -90,6 +90,30 @@ def get_curve(curvetype, rotated, x=np.asarray([0.5])):
         curve = CurveXYZFourierSymmetries(x, order, 2, False)
     elif curvetype == "CurveXYZFourierSymmetries3":
         curve = CurveXYZFourierSymmetries(x, order, 2, False, ntor=3)
+    elif curvetype in [
+        "CurveCWSFourier_windowpane", 
+        "CurveCWSFourier_helical", 
+        "CurveCWSFourier_pol", 
+        "CurveCWSFourier_tor"]:
+        surf_test = SurfaceRZFourier(
+            nfp=1, 
+            stellsym=True, 
+            mpol=1, 
+            ntor=1, 
+            quadpoints_phi=np.arange(50)/50, 
+            quadpoints_theta=np.arange(50)/50, 
+        )
+        quadpoints = np.linspace(0, 1, 128, endpoint=False)
+        if curvetype == "CurveCWSFourier_windowpane":
+            curve = CurveCWSFourier(quadpoints, order, surf_test, G=0, H=0)
+        elif curvetype == "CurveCWSFourier_helical":
+            curve = CurveCWSFourier(quadpoints, order, surf_test, G=10, H=1)
+        elif curvetype == "CurveCWSFourier_pol":
+            curve = CurveCWSFourier(quadpoints, order, surf_test, G=1, H=0)
+        elif curvetype == "CurveCWSFourier_tor":
+            curve = CurveCWSFourier(quadpoints, order, surf_test, G=0, H=1)
+        else:
+            assert False
     else:
         assert False
 
@@ -131,6 +155,16 @@ def get_curve(curvetype, rotated, x=np.asarray([0.5])):
         curve.set('zc(0)', 1)
         curve.set('zs(1)', r)
         dofs = curve.get_dofs()
+    elif curvetype in [
+        "CurveCWSFourier_windowpane", 
+        "CurveCWSFourier_helical", 
+        "CurveCWSFourier_pol", 
+        "CurveCWSFourier_tor"]:
+        curve.set('thetas(1)', .1)
+        curve.set('phic(1)', .05)
+        # The curve.curve2d.dofs and curve.x are not equivalent
+        # because curve.x includes dofs of the surface.
+        dofs = curve.x
     else:
         assert False
 
@@ -142,9 +176,23 @@ def get_curve(curvetype, rotated, x=np.asarray([0.5])):
 
 
 class Testing(unittest.TestCase):
-
-    curvetypes = ["CurveXYZFourier", "JaxCurveXYZFourier", "CurveRZFourier", "JaxCurvePlanarFourier", "CurvePlanarFourier", "CurveHelical", "CurveXYZFourierSymmetries1", "CurveXYZFourierSymmetries2", "CurveXYZFourierSymmetries3", "CurveHelicalInitx0"]
-
+    curvetypes = [
+        "CurveXYZFourier", 
+        "JaxCurveXYZFourier", 
+        "CurveRZFourier", 
+        "JaxCurvePlanarFourier",
+        "CurvePlanarFourier", 
+        "CurveHelical", 
+        "CurveXYZFourierSymmetries1",
+        "CurveXYZFourierSymmetries2", 
+        "CurveXYZFourierSymmetries3", 
+        "CurveHelicalInitx0", 
+        "CurveCWSFourier_windowpane", 
+        "CurveCWSFourier_helical", 
+        "CurveCWSFourier_pol", 
+        "CurveCWSFourier_tor"
+    ]
+    
     def get_curvexyzfouriersymmetries(self, stellsym=True, x=None, nfp=None, ntor=1):
         # returns a CurveXYZFourierSymmetries that is randomly perturbed
 

@@ -8,7 +8,7 @@ from simsopt.geo.curve import RotatedCurve
 import simsoptpp as sopp
 
 
-__all__ = ['Coil', 'Current', 'coils_via_symmetries', 'load_coils_from_makegrid_file',
+__all__ = ['Coil', 'Current', 'coils_via_symmetries', 'load_coils_from_makegrid_file', 'ScaledCurrent',
            'apply_symmetries_to_currents', 'apply_symmetries_to_curves',
            'coils_to_makegrid', 'coils_to_focus'
            ]
@@ -187,7 +187,7 @@ def coils_via_symmetries(curves, currents, nfp, stellsym):
     return coils
 
 
-def load_coils_from_makegrid_file(filename, order, ppp=20, group_names=None):
+def load_coils_from_makegrid_file(filename, order, ppp=20, group_names=None, id_names=None):
     """
     This function loads a file in MAKEGRID input format containing the Cartesian coordinates 
     and the currents for several coils and returns an array with the corresponding coils. 
@@ -208,6 +208,9 @@ def load_coils_from_makegrid_file(filename, order, ppp=20, group_names=None):
         # Handle case of a single string
         group_names = [group_names]
 
+    if isinstance(group_names, str):
+        id_names =  [id_names]
+
     with open(filename, 'r') as f:
         all_coils_values = f.read().splitlines()[3:]
 
@@ -223,11 +226,11 @@ def load_coils_from_makegrid_file(filename, order, ppp=20, group_names=None):
             if group_names is None:
                 currents.append(curr)
             else:
-                this_group_name = vals[5]
+                this_group_name = vals[4]
                 if this_group_name in group_names:
                     currents.append(curr)
 
-    curves = CurveXYZFourier.load_curves_from_makegrid_file(filename, order=order, ppp=ppp, group_names=group_names)
+    curves = CurveXYZFourier.load_curves_from_makegrid_file(filename, order=order, ppp=ppp, group_names=group_names, id_names=id_names)
     coils = [Coil(curves[i], Current(currents[i])) for i in range(len(curves))]
 
     return coils

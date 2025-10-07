@@ -111,7 +111,7 @@ class CurveXYZFourier(sopp.CurveXYZFourier, Curve):
         return coils
 
     @staticmethod
-    def load_curves_from_makegrid_file(filename: str, order: int, ppp=20, group_names=None):
+    def load_curves_from_makegrid_file(filename: str, order: int, ppp=20, group_names=None, id_names=None):
         """
         This function loads a Makegrid input file containing the Cartesian
         coordinates for several coils and finds the corresponding Fourier
@@ -140,12 +140,19 @@ class CurveXYZFourier(sopp.CurveXYZFourier, Curve):
                 float_vals = [float(val) for val in vals[:3]]
                 single_curve_data.append(float_vals)
             elif n_vals == 6:
+                this_group_name = vals[4]
+                this_id_name = vals[5]
                 # This must be the last line of the coil
-                if group_names is None:
+                if group_names is None and id_names is None:
                     curve_data.append(single_curve_data)
-                else:
-                    this_group_name = vals[5]
+                elif group_names is not None and id_names is None:
                     if this_group_name in group_names:
+                        curve_data.append(single_curve_data)
+                elif group_names is None and id_names is not None:
+                    if this_id_name in id_names:
+                        curve_data.append(single_curve_data)
+                elif group_names is not None and id_names is not None:
+                    if this_group_name in group_names and this_id_name in id_names:
                         curve_data.append(single_curve_data)
                 single_curve_data = []
             elif n_vals == 1:
@@ -230,7 +237,6 @@ def jaxfouriercurve_pure(dofs, quadpoints, order):
 
 
 class JaxCurveXYZFourier(JaxCurve):
-
     """
     A Python+Jax implementation of the CurveXYZFourier class. This is an autodiff
     compatible version of the same CurveXYZFourier class in the C++ implementation in
